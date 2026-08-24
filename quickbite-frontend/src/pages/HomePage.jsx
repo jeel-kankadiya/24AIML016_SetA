@@ -1,13 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const HomePage = () => {
   const { auth, login } = useAuth();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  const handleDemoLogin = () => {
-    const demoCustomer = { id: '1', name: 'John Doe', email: 'john@example.com' };
-    login(demoCustomer, 'demo-token-12345');
+  const handleDemoLogin = async () => {
+    setIsLoggingIn(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/v1/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: 'demo@quickbite.com',
+          name: 'Demo User'
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        login(data.data.customer, data.data.token);
+      } else {
+        alert('Login failed. Please try again.');
+      }
+    } catch (err) {
+      alert(`Login error: ${err.message}`);
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   return (
@@ -30,8 +53,12 @@ const HomePage = () => {
         ) : (
           <div className="login-section">
             <p>Click the button below to demo login and access the full platform.</p>
-            <button className="demo-login-btn" onClick={handleDemoLogin}>
-              Demo Login
+            <button 
+              className="demo-login-btn" 
+              onClick={handleDemoLogin}
+              disabled={isLoggingIn}
+            >
+              {isLoggingIn ? '⏳ Logging in...' : 'Demo Login'}
             </button>
           </div>
         )}
